@@ -97,6 +97,7 @@ struct AngleInfo {
     addr_buf_idx: u16,
     lines: u16,
 }
+
 /// Mapping between GPIO pins and HUB75 pins
 pub struct DisplayPins<F: Function> {
     pub r1: Pin<DynPinId, F, PullNone>,
@@ -301,8 +302,13 @@ impl<CH0, CH1> Display<CH0, CH1> where
         }
     }
 
-    fn fb_loop_busy(&self) -> bool {
+    pub fn fb_loop_busy(&self) -> bool {
         self.fb_ch
+            .regs()
+            .ch_ctrl_trig
+            .read()
+            .busy()
+            .bit_is_set() | self.row_ch
             .regs()
             .ch_ctrl_trig
             .read()
@@ -313,8 +319,10 @@ impl<CH0, CH1> Display<CH0, CH1> where
     /// Flips the display buffers
     ///
     /// Has to be called once you have drawn something onto the currently inactive buffer.
-    pub fn commit(&mut self) {
-        while !self.fb_loop_busy() {}
+    pub fn commit(&mut self) -> bool {
+        let busy = self.fb_loop_busy();
+        while self.fb_loop_busy() {}
+        busy
     }
 
     pub fn refresh(&mut self, angle: usize) {
