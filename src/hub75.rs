@@ -114,8 +114,9 @@ pub struct DisplayPins<F: Function> {
     pub oe0: Pin<DynPinId, F, PullNone>,
     pub oe1: Pin<DynPinId, F, PullNone>,
     pub oe2: Pin<DynPinId, F, PullNone>,
-    pub clk: Pin<DynPinId, F, PullNone>,
     pub lat: Pin<DynPinId, F, PullNone>,
+    pub clk0: Pin<DynPinId, F, PullNone>,
+    pub clk1: Pin<DynPinId, F, PullNone>,
 }
 
 /// The HUB75 display driver
@@ -152,22 +153,22 @@ impl<CH0, CH1> Display<CH0, CH1> where
         // Data SM
         let (data_sm, data_sm_tx) = {
             let program_data = pio_proc::pio_asm!(
-                ".side_set 1",
-                "out isr, 32    side 0b0",
+                ".side_set 2",
+                "out isr, 32    side 0b00",
                 ".wrap_target",
-                "mov x isr      side 0b0",
+                "mov x isr      side 0b00",
                 // Wait for the row program to set the ADDR pins
                 "pixel:",
-                "out pins, 8    side 0b0",
-                "jmp x-- pixel  side 0b1", // clock out the pixel
-                "irq 4          side 0b1", // tell the row program to set the next row
-                "wait 1 irq 5   side 0b0",
+                "out pins, 8    side 0b00",
+                "jmp x-- pixel  side 0b11", // clock out the pixel
+                "irq 4          side 0b11", // tell the row program to set the next row
+                "wait 1 irq 5   side 0b00",
                 ".wrap",
             );
             let installed = pio_block.install(&program_data.program).unwrap();
             let (mut sm, _, mut tx) = PIOBuilder::from_program(installed)
                 .out_pins(pins.r1.id().num, 6)
-                .side_set_pin_base(pins.clk.id().num)
+                .side_set_pin_base(pins.clk0.id().num)
                 .clock_divisor_fixed_point(2, 0)// 不能为1 否则屏幕乱码
                 .out_shift_direction(ShiftDirection::Right)
                 .autopull(true)
@@ -180,7 +181,8 @@ impl<CH0, CH1> Display<CH0, CH1> where
                 (pins.r2.id().num, PinDir::Output),
                 (pins.g2.id().num, PinDir::Output),
                 (pins.b2.id().num, PinDir::Output),
-                (pins.clk.id().num, PinDir::Output),
+                (pins.clk0.id().num, PinDir::Output),
+                (pins.clk1.id().num, PinDir::Output),
             ]);
             // Configure the width of the screen
             let one_line_loops: u32 = 63;
@@ -195,12 +197,11 @@ impl<CH0, CH1> Display<CH0, CH1> where
                 "set pins, 0b111 side 0b0",  // disable
                 "pull            side 0b0",
                 "wait 1 irq 4    side 0b0",  // wait one line
-                "nop             side 0b1 [4]",  // latch first
-                "nop             side 0b0 [4]",  //
-                "irq 5           side 0b1",  // notify, latch again for this special hub75
-                "out pins, 5     side 0b1 [4]",  // write addr
-                "out pins, 8     side 0b1",  // write addr and oe to enable
-                "out x, 19       side 0b1",  // delay cnt
+                "nop             side 0b1 [4]",  // notify, latch again for this special hub75
+                "irq 5           side 0b0",  // notify, latch again for this special hub75
+                "out pins, 5     side 0b0 [4]",  // write addr
+                "out pins, 8     side 0b0",  // write addr and oe to enable
+                "out x, 19       side 0b0",  // delay cnt
                 "loop1:",       // delay for pwm
                 "jmp x--, loop1  side 0b0",  // enable
                 ".wrap",

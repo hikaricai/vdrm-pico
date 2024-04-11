@@ -27,7 +27,7 @@ use rp2040_hal::timer::Instant;
 use rtt_target::{rprintln, rprint, rtt_init_default};
 use hub75::DMAExt;
 
-type ButtonPin = gpio::Pin<gpio::bank0::Gpio16, gpio::FunctionSioInput, gpio::PullUp>;
+type ButtonPin = gpio::Pin<gpio::bank0::Gpio17, gpio::FunctionSioInput, gpio::PullUp>;
 
 struct Ctx {
     display: hub75::Display<hub75::CH0, hub75::CH1>,
@@ -127,8 +127,9 @@ fn main() -> ! {
                 oe0: pins.gpio11.into_function().into_pull_type().into_dyn_pin(),
                 oe1: pins.gpio12.into_function().into_pull_type().into_dyn_pin(),
                 oe2: pins.gpio13.into_function().into_pull_type().into_dyn_pin(),
-                clk: pins.gpio14.into_function().into_pull_type().into_dyn_pin(),
-                lat: pins.gpio15.into_function().into_pull_type().into_dyn_pin(),
+                lat: pins.gpio14.into_function().into_pull_type().into_dyn_pin(),
+                clk0: pins.gpio15.into_function().into_pull_type().into_dyn_pin(),
+                clk1: pins.gpio16.into_function().into_pull_type().into_dyn_pin(),
             },
             &mut pio,
             (sm0, sm1),
@@ -138,7 +139,7 @@ fn main() -> ! {
             ANGLE_BUF,
         );
 
-    let button = pins.gpio16.reconfigure();
+    let button = pins.gpio17.reconfigure();
     button.set_interrupt_enabled(EdgeLow, true);
 
     critical_section::with(|cs| {
