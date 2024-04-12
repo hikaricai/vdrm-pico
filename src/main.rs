@@ -28,6 +28,7 @@ use rtt_target::{rprintln, rprint, rtt_init_default};
 use hub75::DMAExt;
 
 type ButtonPin = gpio::Pin<gpio::bank0::Gpio17, gpio::FunctionSioInput, gpio::PullUp>;
+const TOTAL_ANGLES: usize = 120;
 
 struct Ctx {
     display: hub75::Display<hub75::CH0, hub75::CH1>,
@@ -200,7 +201,7 @@ fn TIMER_IRQ_0() {
             return;
         }
         ctx.angle += 1;
-        ctx.angle %= 100;
+        ctx.angle %= TOTAL_ANGLES;
         let interval = MicrosDurationU32::micros(ctx.interval);
         let _ = ctx.alarm.schedule(interval);
         let busy = ctx.display.commit();
@@ -233,9 +234,9 @@ fn IO_IRQ_BANK0() {
             *TICKS1 - *TICKS0
         };
         // begins at 1/4 of circle
-        let angle = ((ctx.angle_offset + 100) as usize + 28) % 100;
+        let angle = ((ctx.angle_offset + TOTAL_ANGLES as i32) as usize + 34) % TOTAL_ANGLES;
         ctx.angle = angle;
-        let interval = ticks as u32 / 100;
+        let interval = ticks as u32 / TOTAL_ANGLES as u32;
         ctx.interval = interval;
         if *LOG_CNT % 50 == 0 {
             rprintln!("interval {}", interval);
