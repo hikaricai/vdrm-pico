@@ -28,7 +28,7 @@ use rtt_target::{rprintln, rprint, rtt_init_default};
 use hub75::DMAExt;
 
 type ButtonPin = gpio::Pin<gpio::bank0::Gpio17, gpio::FunctionSioInput, gpio::PullUp>;
-const TOTAL_ANGLES: usize = 120;
+const TOTAL_ANGLES: usize = 360;
 
 struct Ctx {
     display: hub75::Display<hub75::CH0, hub75::CH1>,
@@ -234,7 +234,7 @@ fn IO_IRQ_BANK0() {
             *TICKS1 - *TICKS0
         };
         // begins at 1/4 of circle
-        let angle = ((ctx.angle_offset + TOTAL_ANGLES as i32) as usize + 34) % TOTAL_ANGLES;
+        let angle = ((ctx.angle_offset + TOTAL_ANGLES as i32) as usize + 101) % TOTAL_ANGLES;
         ctx.angle = angle;
         let interval = ticks as u32 / TOTAL_ANGLES as u32;
         ctx.interval = interval;
