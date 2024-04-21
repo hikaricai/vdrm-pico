@@ -1,4 +1,5 @@
 use core::marker::PhantomData;
+use core::mem::MaybeUninit;
 use rp2040_hal::pac as rp2040_pac;
 use rp2040_hal::pac::DMA;
 
@@ -6,6 +7,7 @@ use rp2040_hal::gpio::{DynPinId, Function, Pin, PullNone};
 use rp2040_hal::pio::{
     Buffers, PIOBuilder, PIOExt, PinDir, ShiftDirection, StateMachineIndex, UninitStateMachine, PIO,
 };
+use crate::TOTAL_ANGLES;
 
 /// DMA unit.
 pub trait DMAExt {
@@ -93,7 +95,7 @@ impl<CH: ChannelIndex> ChannelRegs for Channel<CH> {
 #[derive(Clone, Copy, Default)]
 #[repr(packed)]
 struct AngleInfo {
-    pixel_buf_idx: u16,
+    pixel_buf_idx: u32,
     addr_buf_idx: u16,
     lines: u16,
 }
